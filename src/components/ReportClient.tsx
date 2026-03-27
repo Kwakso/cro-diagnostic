@@ -145,12 +145,8 @@ function RoadmapCard({ item }: { item: RoadmapItem }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm text-slate-300">{item.task}</p>
         <div className="flex items-center gap-3 mt-1.5">
-          <span className={`text-[10px] font-mono ${IMPACT_COLOR[item.impact]}`}>
-            효과 {item.impact}
-          </span>
-          <span className={`text-[10px] font-mono ${EFFORT_COLOR[item.effort]}`}>
-            난이도 {item.effort}
-          </span>
+          <span className={`text-[10px] font-mono ${IMPACT_COLOR[item.impact]}`}>효과 {item.impact}</span>
+          <span className={`text-[10px] font-mono ${EFFORT_COLOR[item.effort]}`}>난이도 {item.effort}</span>
         </div>
       </div>
     </div>
@@ -182,8 +178,6 @@ function CompetitorCard({ insight }: { insight: CompetitorInsight }) {
 
 // ── 벤치마크 바 ────────────────────────────────
 function BenchmarkBar({ label, score, color }: { label: string; score: number; color: string }) {
-  const [width, setWidth] = useState(0);
-  if (typeof window !== "undefined" && width === 0) setTimeout(() => setWidth(score), 300);
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-xs">
@@ -198,16 +192,21 @@ function BenchmarkBar({ label, score, color }: { label: string; score: number; c
   );
 }
 
-// ── 메인 컴포넌트 ──────────────────────────────
+// ──────────────────────────────────────────────
+// 메인 컴포넌트
+// isAdminView=true  → 관리자 전용 (PDF 저장 버튼 노출)
+// isAdminView=false → 사용자 화면 (리드 모달만 노출)
+// ──────────────────────────────────────────────
 interface Props {
   report: DiagnosticReport;
   reportId?: string;
+  isAdminView?: boolean; // /report/[id] 페이지 = true
 }
 
-export default function ReportClient({ report, reportId }: Props) {
+export default function ReportClient({ report, reportId, isAdminView = false }: Props) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
-  const [pdfSuccess, setPdfSuccess] = useState(false);
+  const [leadSuccess, setLeadSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const analyzedDate = new Date(report.analyzedAt).toLocaleDateString("ko-KR", {
@@ -224,25 +223,22 @@ export default function ReportClient({ report, reportId }: Props) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handlePrint() {
-    window.print();
-  }
-
-  const seoPass = report.seoChecks?.filter(c => c.status === "PASS").length ?? 0;
+  const seoPass    = report.seoChecks?.filter(c => c.status === "PASS").length ?? 0;
   const mobilePass = report.mobileChecks?.filter(c => c.status === "PASS").length ?? 0;
 
   return (
     <>
-      {showModal && !pdfSuccess && (
+      {/* 사용자 화면: 리드 수집 모달 */}
+      {!isAdminView && showModal && !leadSuccess && (
         <LeadModal
           reportUrl={reportUrl}
           overallScore={report.overallScore}
           onClose={() => setShowModal(false)}
-          onSuccess={() => { setShowModal(false); setPdfSuccess(true); }}
+          onSuccess={() => { setShowModal(false); setLeadSuccess(true); }}
         />
       )}
 
-      <main className="min-h-screen bg-[#080c14] bg-grid print:bg-white print:text-black">
+      <main className="min-h-screen bg-[#080c14] bg-grid print:bg-white">
         {/* 네비게이션 */}
         <nav className="border-b border-blue-500/10 backdrop-blur-sm sticky top-0 z-40 bg-[#080c14]/90 print:hidden">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -252,23 +248,40 @@ export default function ReportClient({ report, reportId }: Props) {
               <span className="text-sm">새 진단</span>
             </button>
             <div className="flex items-center gap-2">
-              {reportId && (
-                <button onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 bg-slate-800 px-3 py-1.5 rounded-lg transition-all">
-                  {copied ? "✓ 복사됨" : "🔗 링크 복사"}
-                </button>
+              {/* 관리자: 링크 복사 + PDF 저장 */}
+              {isAdminView && (
+                <>
+                  <button onClick={handleCopyLink}
+                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 bg-slate-800 px-3 py-1.5 rounded-lg transition-all">
+                    {copied ? "✓ 복사됨" : "🔗 링크 복사"}
+                  </button>
+                  <button onClick={() => window.print()}
+                    className="flex items-center gap-1.5 text-xs text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg transition-all">
+                    🖨️ PDF 저장
+                  </button>
+                </>
               )}
-              <button onClick={handlePrint}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 bg-slate-800 px-3 py-1.5 rounded-lg transition-all">
-                🖨️ PDF 저장
-              </button>
-              <div className="flex items-center gap-2 ml-2">
+              <div className="flex items-center gap-2 ml-1">
                 <div className="w-6 h-6 rounded-md bg-blue-500 flex items-center justify-center text-white font-bold text-[10px]">CR</div>
                 <span className="text-sm font-display font-semibold text-slate-300 hidden sm:block">CRODiagnostic</span>
               </div>
             </div>
           </div>
         </nav>
+
+        {/* 관리자 전용 상단 안내 바 */}
+        {isAdminView && (
+          <div className="bg-blue-600/10 border-b border-blue-500/20 print:hidden">
+            <div className="max-w-5xl mx-auto px-6 py-2 flex items-center justify-between">
+              <span className="text-xs text-blue-400 font-mono">
+                🔒 관리자 뷰 — 고객 진단 리포트
+              </span>
+              <span className="text-xs text-slate-500 font-mono">
+                ID: {reportId}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
 
@@ -304,13 +317,12 @@ export default function ReportClient({ report, reportId }: Props) {
               <SectionHeader icon="📊" title={`업종 벤치마크 — ${report.benchmark.industry}`} />
               <div className="space-y-3 mb-4">
                 <BenchmarkBar label="현재 내 사이트" score={report.benchmark.userScore} color="#3b82f6" />
-                <BenchmarkBar label="업종 평균" score={report.benchmark.industryAvgScore} color="#94a3b8" />
-                <BenchmarkBar label="업종 상위 10%" score={report.benchmark.topPerformerScore} color="#10b981" />
+                <BenchmarkBar label="업종 평균"      score={report.benchmark.industryAvgScore} color="#94a3b8" />
+                <BenchmarkBar label="업종 상위 10%"  score={report.benchmark.topPerformerScore} color="#10b981" />
               </div>
               <div className="bg-blue-500/5 border border-blue-500/10 rounded-lg p-3">
                 <p className="text-xs text-slate-400">
-                  <span className="text-blue-400 font-mono">💡 핵심 갭: </span>
-                  {report.benchmark.gap}
+                  <span className="text-blue-400 font-mono">💡 핵심 갭: </span>{report.benchmark.gap}
                 </p>
               </div>
             </div>
@@ -422,16 +434,49 @@ export default function ReportClient({ report, reportId }: Props) {
             </div>
           )}
 
-          {/* ── PDF 저장 안내 배너 ── */}
-          <div className="dash-card p-6 text-center print:hidden">
-            <p className="text-slate-400 text-sm mb-3">
-              이 리포트를 PDF로 저장하여 상담 자료로 활용하세요
-            </p>
-            <button onClick={handlePrint}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200">
-              🖨️ PDF로 저장하기 (Ctrl+P)
-            </button>
-          </div>
+          {/* ── 하단 섹션: 사용자 / 관리자 분기 ── */}
+          {isAdminView ? (
+            /* 관리자: PDF 저장 안내 */
+            <div className="dash-card p-6 text-center print:hidden">
+              <p className="text-slate-400 text-sm mb-3">
+                상담 자료로 활용할 PDF를 저장하세요
+              </p>
+              <button onClick={() => window.print()}
+                className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3 rounded-lg transition-all">
+                🖨️ PDF로 저장하기 (Ctrl+P)
+              </button>
+            </div>
+          ) : (
+            /* 사용자: 리드 수집 */
+            <div className="dash-card p-6 sm:p-8 border-blue-500/20 text-center">
+              {leadSuccess ? (
+                <div className="space-y-2">
+                  <div className="text-4xl">✅</div>
+                  <h3 className="font-display font-bold text-white text-lg">신청이 완료되었습니다!</h3>
+                  <p className="text-slate-400 text-sm">
+                    담당자가 확인 후 연락드리겠습니다.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-3xl mb-3">📋</div>
+                  <h3 className="font-display font-bold text-white text-xl mb-2">
+                    전문가 상담을 받아보세요
+                  </h3>
+                  <p className="text-slate-400 text-sm mb-5 max-w-md mx-auto">
+                    진단 결과를 바탕으로{" "}
+                    <strong className="text-white">맞춤 개선 컨설팅</strong>을
+                    무료로 제안드립니다.
+                  </p>
+                  <button onClick={() => setShowModal(true)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-200 animate-glow">
+                    📞 무료 상담 신청하기
+                  </button>
+                  <p className="text-xs text-slate-600 mt-3">스팸 없음 · 언제든 철회 가능</p>
+                </>
+              )}
+            </div>
+          )}
 
           <p className="text-center text-xs text-slate-700 pb-4 print:hidden">
             본 리포트는 GPT-4o AI 자동 분석 결과입니다. © 2024 CRODiagnostic
