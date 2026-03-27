@@ -5,11 +5,12 @@ import { LeadFormData } from "@/types";
 
 interface LeadModalProps {
   reportUrl: string;
+  overallScore?: number;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function LeadModal({ reportUrl, onClose, onSuccess }: LeadModalProps) {
+export function LeadModal({ reportUrl, overallScore, onClose, onSuccess }: LeadModalProps) {
   const [form, setForm] = useState<LeadFormData>({
     name: "",
     email: "",
@@ -35,7 +36,7 @@ export function LeadModal({ reportUrl, onClose, onSuccess }: LeadModalProps) {
       const res = await fetch("/api/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lead: form, reportUrl }),
+        body: JSON.stringify({ lead: form, reportUrl, overallScore }),
       });
 
       const data = await res.json();
