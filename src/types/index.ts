@@ -48,6 +48,7 @@ export interface Prescription {
 }
 
 export interface DiagnosticReport {
+  id?: string;           // ← 이 줄 추가
   url: string;
   analyzedAt: string;
   overallScore: number;
@@ -72,5 +73,6 @@ export interface LeadFormData {
 export interface AnalyzeApiResponse {
   success: boolean;
   report?: DiagnosticReport;
+  reportId?: string;     // ← 이 줄 추가
   error?: string;
 }
