@@ -10,10 +10,14 @@ const TRUST_METRICS = [
 ];
 
 const SAMPLE_ISSUES = [
-  { icon: "⚡", text: "3초 안에 무엇을 파는지 불명확" },
-  { icon: "🔒", text: "신뢰 요소(후기·인증) 부재" },
-  { icon: "📱", text: "모바일 CTA 버튼 클릭 불가" },
-  { icon: "💬", text: "가치 제안 문구가 고객 언어와 불일치" },
+  { icon: "🏥", text: "병원: 진료 예약 버튼이 눈에 안 띔" },
+  { icon: "☕", text: "카페/음식점: 영업시간·위치 정보 찾기 어려움" },
+  { icon: "🏫", text: "학원: 수강 신청 절차가 복잡하고 불명확" },
+  { icon: "🏛️", text: "관공서: 민원 서비스 접근 경로가 복잡" },
+  { icon: "🛒", text: "쇼핑몰: 3초 안에 무엇을 파는지 불명확" },
+  { icon: "🔒", text: "전 업종: 신뢰 요소(후기·인증) 부재" },
+  { icon: "📱", text: "전 업종: 모바일 핵심 버튼 클릭 불가" },
+  { icon: "💬", text: "전 업종: 방문자 언어와 맞지 않는 문구" },
 ];
 
 export default function HomePage() {
@@ -89,13 +93,13 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-display font-bold text-white leading-tight mb-5 tracking-tight">
-            매출이 안 나오는 이유,
+            웹사이트 문제를,
             <br />
-            <span className="text-gradient">AI가 30초 만에</span> 찾아드립니다
+            <span className="text-gradient">AI가 30초 만에</span> 진단해드립니다
           </h1>
 
           <p className="text-slate-400 text-lg max-w-xl mx-auto leading-relaxed">
-            URL 하나만 입력하세요. 전환율 전문가 수준의 매출 진단 리포트를{" "}
+            URL 하나만 입력하세요. 전환율 전문가 수준의 웹사이트 진단 리포트를{" "}
             <strong className="text-slate-200">무료</strong>로 받으세요.
           </p>
         </div>
@@ -222,7 +226,7 @@ export default function HomePage() {
         {/* 자주 발견되는 문제 */}
         <div className="mb-12">
           <h2 className="text-xs font-mono text-slate-500 uppercase tracking-widest mb-4 text-center">
-            AI가 자주 발견하는 매출 저하 원인
+            AI가 자주 발견하는 웹사이트 문제 — 업종 무관
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {SAMPLE_ISSUES.map((issue, i) => (
