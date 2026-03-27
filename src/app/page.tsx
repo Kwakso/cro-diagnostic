@@ -45,6 +45,7 @@ export default function HomePage() {
 
       // 리포트를 sessionStorage에 저장 후 결과 페이지로 이동
       sessionStorage.setItem("cro_report", JSON.stringify(data.report));
+      if (data.reportId) sessionStorage.setItem("cro_report_id", data.reportId);
       router.push("/report");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "분석 실패");

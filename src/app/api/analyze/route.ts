@@ -5,9 +5,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scrapeWebsite, fetchMetaFallback } from "@/lib/scraper";
 import { analyzeWebsite } from "@/lib/analyzer";
+import { saveReport } from "@/lib/kv";
 import { AnalyzeApiResponse } from "@/types";
+import { randomUUID } from "crypto";
 
-export const maxDuration = 60; // Vercel Pro: 최대 60초
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 스크래핑 (Playwright → fallback) ──
+    // ── 스크래핑 ──
     let meta;
     try {
       meta = await scrapeWebsite(normalizedUrl);
@@ -48,16 +50,25 @@ export async function POST(req: NextRequest) {
     // ── GPT-4o 분석 ──
     const report = await analyzeWebsite(meta);
 
+    // ── Vercel KV에 리포트 저장 ──
+    const reportId = randomUUID();
+    report.id = reportId;
+
+    try {
+      await saveReport(reportId, report);
+      console.log(`[KV] 리포트 저장 완료: report:${reportId}`);
+    } catch (kvErr) {
+      // KV 저장 실패해도 분석 결과는 반환 (graceful degradation)
+      console.warn("[KV] 저장 실패 (무시):", kvErr);
+    }
+
     return NextResponse.json<AnalyzeApiResponse>(
-      { success: true, report },
+      { success: true, report, reportId },
       { status: 200 }
     );
   } catch (err: unknown) {
     console.error("[analyze API] 오류:", err);
-
-    const message =
-      err instanceof Error ? err.message : "서버 오류가 발생했습니다.";
-
+    const message = err instanceof Error ? err.message : "서버 오류가 발생했습니다.";
     return NextResponse.json<AnalyzeApiResponse>(
       { success: false, error: message },
       { status: 500 }
